@@ -44,7 +44,7 @@ class MainHandler(webapp2.RequestHandler):
     def get(self):
 
         form = """
-        <form action='/add' method="post">
+        <form action="/add" method="post">
             <table>
                 <tbody>
                     <tr>
@@ -70,7 +70,7 @@ class MainHandler(webapp2.RequestHandler):
                             <label for="password">Verify Password</label>
                         </td>
                         <td>
-                            <input name="password" type="password" required />
+                            <input name="verify" type="password" required />
                             <span class="error"></span>
                         </td>
                     </tr>
@@ -97,7 +97,8 @@ class MainHandler(webapp2.RequestHandler):
         else:
             error_element = ''
 
-        content = page_header + form + page_footer
+        main_content = form + error_element
+        content = page_header + main_content + page_footer
 
         self.response.write(content)
 
@@ -109,20 +110,28 @@ class addUser(webapp2.RequestHandler):
     def post(self):
 
         new_username = self.request.get("username")
-
-        if new_username == '':
-            self.redirect("/?error= You forgot to put in a username.")
-
         new_password = self.request.get("password")
-        password_verified = ''
+        password_verified = self.request.get("verify")
+        new_email = self.request.get("email")
 
-        if new_password == password_verified:
-            content = "<h1>Welcome, " + new_username + "!</h1>"
-            self.response.write(content)
+        if len(new_username) < 3 or ' ' in new_username:
+            self.redirect("/?error= That's not a valid username.".format(new_username))
 
-        elif new_password != password_verified:
-            error1 = "Passwords don't match.".format(new_password)
-            self.redirect("/?error=" + error1)
+        if len(new_password) < 3:
+            self.redirect("/?error= That's not a valid password".format(new_password))
+
+        if password_verified != new_password:
+            self.redirect("/?error= Passwords don't match.".format(password_verified))
+
+        if new_email:
+            if "@" and "." not in new_email:
+                self.redirect("/?error= That's not a valid email address.".format(new_email))
+
+        new_username = cgi.escape(new_username, quote=True)
+
+        content = "<h1>Welcome, " + new_username + "!</h1>"
+        self.response.write(content)
+
 
 app = webapp2.WSGIApplication([
     ('/', MainHandler),
